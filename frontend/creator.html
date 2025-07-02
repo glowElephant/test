@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creator Page</title>
+  <script src="lib/react.development.js"></script>
+  <script src="lib/react-dom.development.js"></script>
+  <script src="lib/babel.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .package { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; display: flex; align-items: center; }
+    .package img { width: 60px; height: 60px; object-fit: cover; margin-right: 10px; }
+    .form-group { margin-bottom: 10px; }
+    .button-row { margin-top: 20px; text-align: right; }
+  </style>
+</head>
+<body>
+  <div id="app" class="container"></div>
+
+  <script type="text/babel">
+    function CreatorApp() {
+      const [packages, setPackages] = React.useState([]);
+      const [characters, setCharacters] = React.useState([]);
+      const [page, setPage] = React.useState('list');
+      const [pendingPackage, setPendingPackage] = React.useState(null);
+
+      const addPackage = (pkg) => {
+        setPackages([...packages, { ...pkg, id: packages.length + 1 }]);
+      };
+
+      const addCharacter = (char) => {
+        setCharacters([...characters, { ...char, id: characters.length + 1 }]);
+      };
+
+      if (page === 'newPackage') {
+        return <PackageForm characters={characters} onCreateCharacter={() => { setPage('newCharacter'); }} onSubmit={(pkg) => { addPackage(pkg); setPage('list'); }} onCancel={() => setPage('list')} />;
+      }
+
+      if (page === 'newCharacter') {
+        return <CharacterForm onSubmit={(char) => { addCharacter(char); setPage('newPackage'); }} onCancel={() => setPage('newPackage')} />;
+      }
+
+      return (
+        <div>
+          <h1>크리에이터 페이지</h1>
+          {packages.map(p => (
+            <div key={p.id} className="package">
+              {p.thumbnail && <img src={p.thumbnail} alt="thumbnail" />}
+              <div>
+                <div>{p.name}</div>
+                <div>상태: {p.status}</div>
+              </div>
+            </div>
+          ))}
+          <div className="button-row">
+            <button onClick={() => setPage('newPackage')}>패키지 등록</button>
+          </div>
+        </div>
+      );
+    }
+
+    function PackageForm({ characters, onCreateCharacter, onSubmit, onCancel }) {
+      const [characterId, setCharacterId] = React.useState('');
+      const [thumbnail, setThumbnail] = React.useState(null);
+      const [name, setName] = React.useState('');
+      const [file, setFile] = React.useState(null);
+
+      const handleThumbnail = (e) => {
+        const f = e.target.files[0];
+        if (f) {
+          const reader = new FileReader();
+          reader.onload = (ev) => setThumbnail(ev.target.result);
+          reader.readAsDataURL(f);
+        }
+      };
+
+      const submit = () => {
+        if (!characterId || !name) return;
+        onSubmit({ characterId, name, file, thumbnail, status: '심사중' });
+      };
+
+      return (
+        <div>
+          <h2>패키지 등록</h2>
+          <div className="form-group">
+            <select value={characterId} onChange={e => setCharacterId(e.target.value)}>
+              <option value="">캐릭터 선택</option>
+              {characters.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <button onClick={onCreateCharacter} style={{marginLeft:'10px'}}>캐릭터 생성</button>
+          </div>
+          <div className="form-group">
+            <input type="file" accept="image/*" onChange={handleThumbnail} />
+          </div>
+          <div className="form-group">
+            <input type="text" placeholder="패키지 이름" value={name} onChange={e => setName(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <input type="file" accept=".zip" onChange={e => setFile(e.target.files[0])} />
+          </div>
+          <div className="button-row">
+            <button onClick={submit}>심사요청</button>
+            <button onClick={onCancel} style={{marginLeft:'10px'}}>취소</button>
+          </div>
+        </div>
+      );
+    }
+
+    function CharacterForm({ onSubmit, onCancel }) {
+      const [thumbnail, setThumbnail] = React.useState(null);
+      const [name, setName] = React.useState('');
+      const [intro, setIntro] = React.useState('');
+
+      const handleThumbnail = (e) => {
+        const f = e.target.files[0];
+        if (f) {
+          const reader = new FileReader();
+          reader.onload = (ev) => setThumbnail(ev.target.result);
+          reader.readAsDataURL(f);
+        }
+      };
+
+      const submit = () => {
+        if (!name) return;
+        onSubmit({ name, intro, thumbnail });
+      };
+
+      return (
+        <div>
+          <h2>캐릭터 생성</h2>
+          <div className="form-group">
+            <input type="file" accept="image/*" onChange={handleThumbnail} />
+          </div>
+          <div className="form-group">
+            <input type="text" placeholder="캐릭터 이름" value={name} onChange={e => setName(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <input type="text" placeholder="캐릭터 소개" value={intro} onChange={e => setIntro(e.target.value)} />
+          </div>
+          <div className="button-row">
+            <button onClick={submit}>저장</button>
+            <button onClick={onCancel} style={{marginLeft:'10px'}}>취소</button>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('app'));
+    root.render(<CreatorApp />);
+  </script>
+</body>
+</html>
