@@ -20,6 +20,8 @@ The server exposes a few JSON APIs such as `/characters`, `/packages` and `/pack
 ## Frontend
 
 * A very small React application in `frontend/index.html`
+* The page now ships with local copies of React, ReactDOM and Babel (in `frontend/lib`)
+  so it works even without internet access.
 * Open the file directly in the browser after starting the backend.
 * Click a package to see its items and try purchasing them.
 
