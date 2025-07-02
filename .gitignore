@@ -1,0 +1,5 @@
+web_images/
+pod_images/
+app.db
+image_mapping.csv
+__pycache__/
