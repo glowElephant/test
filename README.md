@@ -24,6 +24,9 @@ The server exposes a few JSON APIs such as `/characters`, `/packages` and `/pack
   so it works even without internet access.
 * Open the file directly in the browser after starting the backend.
 * Click a package to see its items and try purchasing them.
+* A simple creator interface is available in `frontend/creator.html`. It allows
+  registering characters and packages locally to try out the flow described in
+  `test.md`.
 
 ## Database
 
