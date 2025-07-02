@@ -23,6 +23,20 @@ app.get('/characters', async (req, res) => {
   }
 });
 
+app.get('/characters/:id/patch_groups', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await db.query(
+      'SELECT * FROM patch_groups WHERE character_id = $1 ORDER BY id',
+      [id]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'failed to fetch patch groups' });
+  }
+});
+
 app.post('/characters', async (req, res) => {
   const { name, intro } = req.body;
   try {
@@ -86,6 +100,18 @@ app.post('/items', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'failed to create item' });
+  }
+});
+
+app.get('/users/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await db.query('SELECT * FROM users WHERE id = $1', [id]);
+    if (!rows.length) return res.status(404).json({ error: 'user not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'failed to fetch user' });
   }
 });
 
