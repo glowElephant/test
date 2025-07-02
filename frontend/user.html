@@ -133,7 +133,12 @@
               <h4>{group.name}</h4>
               <div className="item-list">
                 {items.map(it => (
-                  <img key={it.id} src={it.web_image_url} style={{border: selection[group.id]?.id===it.id?'2px solid blue':'1px solid #ccc'}} onClick={() => select(it)} />
+                  <img
+                    key={it.id}
+                    src={it.web_image_url}
+                    style={{border: (selection[group.id] && selection[group.id].id === it.id) ? '2px solid blue' : '1px solid #ccc'}}
+                    onClick={() => select(it)}
+                  />
                 ))}
               </div>
             </div>
