@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Character Customization</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .item { border: 1px solid #ccc; padding: 10px; margin: 5px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="text/babel">
+    const apiBase = 'http://localhost:3001';
+
+    function useFetch(url) {
+      const [data, setData] = React.useState([]);
+      React.useEffect(() => {
+        fetch(url)
+          .then(res => res.json())
+          .then(setData);
+      }, [url]);
+      return data;
+    }
+
+    function CharacterList() {
+      const chars = useFetch(`${apiBase}/characters`);
+      return (
+        <div>
+          <h2>Characters</h2>
+          <ul>
+            {chars.map(c => <li key={c.id}>{c.name}</li>)}
+          </ul>
+        </div>
+      );
+    }
+
+    function PackageList() {
+      const packs = useFetch(`${apiBase}/packages`);
+      const [selected, setSelected] = React.useState(null);
+      return (
+        <div>
+          <h2>Packages</h2>
+          <ul>
+            {packs.map(p => (
+              <li key={p.id} onClick={() => setSelected(p.id)} style={{cursor:'pointer'}}>
+                {p.name}
+              </li>
+            ))}
+          </ul>
+          {selected && <ItemList packageId={selected} />}
+        </div>
+      );
+    }
+
+    function ItemList({ packageId }) {
+      const items = useFetch(`${apiBase}/packages/${packageId}/items`);
+      const buy = (id) => {
+        fetch(`${apiBase}/purchase`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: 1, item_id: id })
+        }).then(res => res.json()).then(alert);
+      };
+      return (
+        <div>
+          <h3>Items</h3>
+          {items.map(i => (
+            <div className="item" key={i.id}>
+              {i.name} - {i.price}pt
+              <button onClick={() => buy(i.id)} style={{marginLeft:'10px'}}>buy</button>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <h1>Character Customization Demo</h1>
+          <CharacterList />
+          <PackageList />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('app'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
