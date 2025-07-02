@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Page</title>
+  <script src="lib/react.development.js"></script>
+  <script src="lib/react-dom.development.js"></script>
+  <script src="lib/babel.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .package { border: 1px solid #ccc; margin: 5px; padding: 5px; width: 150px; cursor: pointer; }
+    .package img { width: 100%; }
+    .item-list img { width: 60px; height: 60px; margin: 2px; cursor: pointer; }
+    .item-list { display: flex; overflow-x: auto; }
+    #character img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="text/babel">
+    const apiBase = 'http://localhost:3001';
+    const userId = 1;
+
+    function useFetch(url) {
+      const [data, setData] = React.useState([]);
+      React.useEffect(() => {
+        fetch(url).then(r => r.json()).then(setData);
+      }, [url]);
+      return data;
+    }
+
+    function PackageList({ onSelect }) {
+      const packs = useFetch(`${apiBase}/packages`);
+      return (
+        <div>
+          <h1>패키지 선택</h1>
+          <div style={{display:'flex',flexWrap:'wrap'}}>
+            {packs.map(p => (
+              <div className="package" key={p.id} onClick={() => onSelect(p)}>
+                <img src={p.thumbnail_url} alt="thumb" />
+                <div>{p.name}</div>
+                <div style={{fontSize:'12px'}}>{p.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function CaptureView({ selection, onClose }) {
+      const [saved, setSaved] = React.useState(false);
+      const save = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 500;
+        canvas.height = 500;
+        const ctx = canvas.getContext('2d');
+        const images = Object.values(selection);
+        let loaded = 0;
+        images.forEach(sel => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = sel.web_image_url;
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            loaded++;
+            if (loaded === images.length) {
+              const link = document.createElement('a');
+              link.download = 'character.png';
+              link.href = canvas.toDataURL('image/png');
+              link.click();
+              setSaved(true);
+              setTimeout(onClose, 500);
+            }
+          };
+        });
+      };
+      return (
+        <div style={{textAlign:'center'}}>
+          <div style={{position:'relative',width:'300px',height:'300px',margin:'0 auto'}}>
+            {Object.values(selection).map(sel => (
+              <img key={sel.id} src={sel.web_image_url} />
+            ))}
+          </div>
+          {!saved && <button onClick={save}>배경화면으로 저장하기</button>}
+        </div>
+      );
+    }
+
+    function Customizer({ pack, onBack }) {
+      const patchGroups = useFetch(`${apiBase}/characters/${pack.character_id}/patch_groups`);
+      const items = useFetch(`${apiBase}/packages/${pack.id}/items`);
+      const [user, setUser] = React.useState(null);
+      const [selection, setSelection] = React.useState({});
+      const [capture, setCapture] = React.useState(false);
+
+      React.useEffect(() => {
+        fetch(`${apiBase}/users/${userId}`).then(r => r.json()).then(setUser);
+      }, []);
+
+      React.useEffect(() => {
+        if (items.length) {
+          const defaults = {};
+          items.forEach(i => { if (i.is_default) defaults[i.patch_group_id] = i; });
+          setSelection(defaults);
+        }
+      }, [items]);
+
+      const select = item => {
+        setSelection({...selection, [item.patch_group_id]: item});
+      };
+
+      if (capture) return <CaptureView selection={selection} onClose={() => setCapture(false)} />;
+
+      const grouped = patchGroups.map(pg => ({
+        group: pg,
+        items: items.filter(it => it.patch_group_id === pg.id)
+      }));
+
+      return (
+        <div>
+          <button onClick={onBack}>← 목록</button>
+          {user && <div style={{position:'absolute',top:10,right:10}}>포인트: {user.point_balance}</div>}
+          <button style={{position:'absolute',top:10,right:120}} onClick={() => setCapture(true)}>캡쳐</button>
+          <div id="character" style={{position:'relative',width:'300px',height:'300px',margin:'20px auto'}}>
+            {Object.values(selection).map(sel => (
+              <img key={sel.id} src={sel.web_image_url} />
+            ))}
+          </div>
+          {grouped.map(({group,items}) => (
+            <div key={group.id}>
+              <h4>{group.name}</h4>
+              <div className="item-list">
+                {items.map(it => (
+                  <img key={it.id} src={it.web_image_url} style={{border: selection[group.id]?.id===it.id?'2px solid blue':'1px solid #ccc'}} onClick={() => select(it)} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function App() {
+      const [pack, setPack] = React.useState(null);
+      if (!pack) return <PackageList onSelect={setPack} />;
+      return <Customizer pack={pack} onBack={() => setPack(null)} />;
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('app'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

@@ -27,6 +27,9 @@ The server exposes a few JSON APIs such as `/characters`, `/packages` and `/pack
 * A simple creator interface is available in `frontend/creator.html`. It allows
   registering characters and packages locally to try out the flow described in
   `test.md`.
+* Users can try customizing characters in `frontend/user.html`. It lists
+  available packages, lets you try on items by part and includes a capture
+  screen to save the assembled character as an image.
 
 ## Database
 
